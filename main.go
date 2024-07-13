@@ -51,13 +51,11 @@ func searchYouTubeVideo(service *youtube.Service, query string) (string, error) 
 }
 
 func main() {
-	// Load environment variables from .env file
 	err := godotenv.Load()
 	if err != nil {
 		log.Fatal("Error loading .env file")
 	}
 
-	// Spotify credentials
 	spotifyClientID := os.Getenv("SPOTIFY_CLIENT_ID")
 	spotifyClientSecret := os.Getenv("SPOTIFY_CLIENT_SECRET")
 
@@ -65,37 +63,31 @@ func main() {
 		log.Fatal("Missing SPOTIFY_CLIENT_ID or SPOTIFY_CLIENT_SECRET environment variable")
 	}
 
-	// Spotify configuration
 	spotifyConfig := &clientcredentials.Config{
 		ClientID:     spotifyClientID,
 		ClientSecret: spotifyClientSecret,
 		TokenURL:     "https://accounts.spotify.com/api/token",
 	}
 
-	// Create HTTP client
 	spotifyHttpClient := spotifyConfig.Client(context.Background())
 	spotifyClient := spotify.New(spotifyHttpClient)
 	playlistID := spotify.ID("2nSHh0BiEoRjfOAF5HXLu9")
 
-	// Get tracks from Spotify playlist
 	tracks, err := getSpotifyPlaylist(spotifyClient, playlistID)
 	if err != nil {
 		log.Fatalf("Error retrieving Spotify playlist: %v", err)
 	}
 
-	// YouTube credentials
 	ytCredentialsJSON := []byte(os.Getenv("YOUTUBE_CREDENTIALS_JSON"))
 	if len(ytCredentialsJSON) == 0 {
 		log.Fatal("Missing YOUTUBE_CREDENTIALS_JSON environment variable")
 	}
 
-	// YouTube configuration
 	ytConfig, err := google.ConfigFromJSON(ytCredentialsJSON, youtube.YoutubeScope)
 	if err != nil {
 		log.Fatalf("Error loading YouTube credentials: %v", err)
 	}
 
-	// OAuth2 token handling
 	tokenFile := "token.json"
 	token, err := tokenFromFile(tokenFile)
 	if err != nil {
@@ -103,7 +95,6 @@ func main() {
 		saveToken(tokenFile, token)
 	}
 
-	// YouTube client
 	ytClient := ytConfig.Client(context.Background(), token)
 	ytService, err := youtube.NewService(context.Background(), option.WithHTTPClient(ytClient))
 	if err != nil {
@@ -111,7 +102,7 @@ func main() {
 	}
 
 	videoIds := make([]string, 0)
-	// Add tracks to YouTube playlist
+
 	for _, track := range tracks {
 		query := fmt.Sprintf("%s %s", track.Name, track.Artist)
 		videoID, err := searchYouTubeVideo(ytService, query)
